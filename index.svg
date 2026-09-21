@@ -225,7 +225,7 @@
         <xhtml:script><![CDATA[
 
           const PROXY_URL =
-            "https://split-jpeg-doe-encourages.trycloudflare.com";
+            "https://secluding-crown-pointing.ngrok-free.dev";
 
           const endpoint =
             document.getElementById("endpoint");
