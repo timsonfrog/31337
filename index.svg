@@ -1,0 +1,456 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xhtml="http://www.w3.org/1999/xhtml"
+     width="100%"
+     height="100%"
+     viewBox="0 0 1200 800">
+
+  <foreignObject x="0" y="0" width="1200" height="800">
+    <xhtml:html>
+      <xhtml:head>
+        <xhtml:meta charset="utf-8"/>
+        <xhtml:meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+        <xhtml:style>
+          *{box-sizing:border-box}
+          html,body{margin:0;width:100%;height:100%}
+          body{
+            background:#080808;
+            color:#eee;
+            font-family:Inter,system-ui,Arial,sans-serif;
+            display:flex;
+            flex-direction:column;
+            overflow:hidden
+          }
+
+          header{
+            height:64px;
+            min-height:64px;
+            border-bottom:1px solid #242424;
+            background:#0d0d0d;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:0 16px
+          }
+
+          .logo{
+            font-weight:900;
+            letter-spacing:.08em;
+            font-size:19px;
+            white-space:nowrap
+          }
+
+          .logo span{opacity:.45}
+
+          .controls{
+            display:flex;
+            gap:7px
+          }
+
+          button{
+            border:1px solid #2d2d2d;
+            background:#151515;
+            color:#eee;
+            border-radius:9px;
+            padding:9px 12px;
+            cursor:pointer
+          }
+
+          button:hover{background:#202020}
+
+          .address{
+            flex:1;
+            display:flex;
+            gap:8px
+          }
+
+          input{
+            width:100%;
+            border:1px solid #303030;
+            background:#111;
+            color:#eee;
+            border-radius:10px;
+            padding:11px 13px;
+            outline:none
+          }
+
+          input:focus{border-color:#666}
+
+          main{
+            flex:1;
+            display:flex;
+            min-height:0;
+            height:calc(100% - 64px)
+          }
+
+          .browser{
+            flex:1;
+            background:#111;
+            position:relative;
+            min-width:0
+          }
+
+          iframe{
+            width:100%;
+            height:100%;
+            border:0;
+            background:white
+          }
+
+          .panel{
+            width:290px;
+            min-width:290px;
+            border-left:1px solid #242424;
+            background:#0d0d0d;
+            padding:14px;
+            overflow:auto
+          }
+
+          .card{
+            border:1px solid #242424;
+            background:#111;
+            border-radius:12px;
+            padding:12px;
+            margin-bottom:12px
+          }
+
+          .small{
+            font-size:12px;
+            color:#999;
+            word-break:break-all
+          }
+
+          .status{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-weight:700
+          }
+
+          .dot{
+            width:10px;
+            height:10px;
+            border-radius:50%;
+            background:#555
+          }
+
+          .ok .dot{background:#55d88a}
+          .bad .dot{background:#ff5757}
+
+          pre{
+            white-space:pre-wrap;
+            word-break:break-word;
+            font-size:11px;
+            color:#aaa;
+            margin:8px 0 0
+          }
+
+          h3{
+            font-size:12px;
+            text-transform:uppercase;
+            letter-spacing:.08em;
+            color:#999;
+            margin:0 0 9px
+          }
+
+          @media(max-width:800px){
+            .panel{display:none}
+          }
+        </xhtml:style>
+      </xhtml:head>
+
+      <xhtml:body>
+
+        <xhtml:header>
+          <xhtml:div class="logo">
+            ELEET <xhtml:span>PROXY</xhtml:span>
+          </xhtml:div>
+
+          <xhtml:div class="controls">
+            <xhtml:button onclick="goBack()">←</xhtml:button>
+            <xhtml:button onclick="goForward()">→</xhtml:button>
+            <xhtml:button onclick="reloadFrame()">↻</xhtml:button>
+          </xhtml:div>
+
+          <xhtml:div class="address">
+            <xhtml:input
+              id="url"
+              placeholder="https://example.com"
+              onkeydown="if(event.key==='Enter')navigate()"/>
+
+            <xhtml:button onclick="navigate()">GO</xhtml:button>
+          </xhtml:div>
+        </xhtml:header>
+
+        <xhtml:main>
+
+          <xhtml:section class="browser">
+            <xhtml:iframe
+              id="view"
+              title="Eleet Proxy browser">
+            </xhtml:iframe>
+          </xhtml:section>
+
+          <xhtml:aside class="panel">
+
+            <xhtml:div class="card">
+              <xhtml:h3>Connection</xhtml:h3>
+
+              <xhtml:div id="status" class="status bad">
+                <xhtml:span class="dot"></xhtml:span>
+                <xhtml:span>Not tested</xhtml:span>
+              </xhtml:div>
+
+              <xhtml:button
+                style="margin-top:10px;width:100%"
+                onclick="testConnection()">
+                Test Cloudflare
+              </xhtml:button>
+            </xhtml:div>
+
+            <xhtml:div class="card">
+              <xhtml:h3>Configured endpoint</xhtml:h3>
+              <xhtml:div id="endpoint" class="small"></xhtml:div>
+            </xhtml:div>
+
+            <xhtml:div class="card">
+              <xhtml:h3>Debug</xhtml:h3>
+              <xhtml:pre id="debug">Waiting...</xhtml:pre>
+            </xhtml:div>
+
+          </xhtml:aside>
+
+        </xhtml:main>
+
+        <xhtml:script><![CDATA[
+
+          const PROXY_URL =
+            "https://split-jpeg-doe-encourages.trycloudflare.com";
+
+          const endpoint =
+            document.getElementById("endpoint");
+
+          const statusEl =
+            document.getElementById("status");
+
+          const debugEl =
+            document.getElementById("debug");
+
+          const frame =
+            document.getElementById("view");
+
+          const input =
+            document.getElementById("url");
+
+
+          function cleanBase() {
+            return PROXY_URL
+              .trim()
+              .replace(/\/+$/, "");
+          }
+
+
+          function setDebug(lines) {
+            debugEl.textContent =
+              lines.join("\n");
+          }
+
+
+          function proxyURL(target) {
+            return cleanBase()
+              + "/proxy?url="
+              + encodeURIComponent(target);
+          }
+
+
+          async function testConnection() {
+
+            endpoint.textContent =
+              PROXY_URL;
+
+            if (!/^https:\/\//i.test(PROXY_URL)) {
+
+              setStatus(
+                false,
+                "Invalid HTTPS endpoint"
+              );
+
+              setDebug([
+                "PROXY_URL must start with https://",
+                "Current: " + PROXY_URL
+              ]);
+
+              return;
+            }
+
+
+            const health =
+              cleanBase() + "/health";
+
+
+            setDebug([
+              "Testing:",
+              health,
+              "",
+              "Waiting..."
+            ]);
+
+
+            const started =
+              performance.now();
+
+
+            try {
+
+              const response =
+                await fetch(
+                  health,
+                  {cache:"no-store"}
+                );
+
+
+              const text =
+                await response.text();
+
+
+              const ms =
+                Math.round(
+                  performance.now()
+                  - started
+                );
+
+
+              if (!response.ok) {
+
+                setStatus(
+                  false,
+                  "HTTP " + response.status
+                );
+
+              } else {
+
+                setStatus(
+                  true,
+                  "ONLINE • " + ms + "ms"
+                );
+              }
+
+
+              setDebug([
+                "Proxy URL:",
+                cleanBase(),
+                "",
+                "Health URL:",
+                health,
+                "",
+                "HTTP status: "
+                  + response.status,
+                "Response:",
+                text
+              ]);
+
+            } catch (err) {
+
+              setStatus(
+                false,
+                "FAILED TO FETCH"
+              );
+
+              setDebug([
+                "Proxy URL:",
+                cleanBase(),
+                "",
+                "Health URL:",
+                health,
+                "",
+                "Browser/network error:",
+                String(err),
+                "",
+                "Check that the tunnel is running and",
+                "that /health works directly."
+              ]);
+            }
+          }
+
+
+          function setStatus(ok,text) {
+
+            statusEl.className =
+              "status " +
+              (ok ? "ok" : "bad");
+
+            statusEl
+              .querySelector(
+                "span:last-child"
+              )
+              .textContent = text;
+          }
+
+
+          function navigate() {
+
+            let target =
+              input.value.trim();
+
+            if (!target)
+              return;
+
+
+            if (!/^https?:\/\//i.test(target))
+              target =
+                "https://" + target;
+
+
+            const finalURL =
+              proxyURL(target);
+
+
+            setDebug([
+              "Target:",
+              target,
+              "",
+              "Generated proxy request:",
+              finalURL
+            ]);
+
+
+            frame.src =
+              finalURL;
+          }
+
+
+          function reloadFrame() {
+
+            if (frame.src)
+              frame.src =
+                frame.src;
+          }
+
+
+          function goBack() {
+
+            try {
+              frame.contentWindow
+                .history.back();
+            } catch(e) {}
+          }
+
+
+          function goForward() {
+
+            try {
+              frame.contentWindow
+                .history.forward();
+            } catch(e) {}
+          }
+
+
+          endpoint.textContent =
+            PROXY_URL;
+
+        ]]></xhtml:script>
+
+      </xhtml:body>
+    </xhtml:html>
+  </foreignObject>
+</svg>
